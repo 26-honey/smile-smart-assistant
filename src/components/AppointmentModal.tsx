@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -81,6 +80,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
   });
   
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   const handleChange = (field: keyof AppointmentDetails, value: string | Date | undefined) => {
     setAppointmentDetails(prev => ({
@@ -152,6 +152,12 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
     }
   };
 
+  const handleCalendarSelect = (date: Date | undefined) => {
+    handleChange('date', date);
+    // Keep the popover open after selection
+    setCalendarOpen(true);
+  };
+
   const disabledDays = [
     new Date(2025, 3, 12), // Example of unavailable date (April 12, 2025)
     new Date(2025, 3, 13), // Example of unavailable date (April 13, 2025)
@@ -160,7 +166,12 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px]" onPointerDownOutside={(e) => {
+        // Prevent the dialog from closing when clicking inside the calendar popover
+        if (calendarOpen) {
+          e.preventDefault();
+        }
+      }}>
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle className="text-dental-dark-blue">Schedule Your Dental Appointment</DialogTitle>
@@ -217,7 +228,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
                 <Label className={errors.date ? "text-destructive" : ""}>
                   Date
                 </Label>
-                <Popover>
+                <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
@@ -226,6 +237,10 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
                         !appointmentDetails.date && "text-muted-foreground",
                         errors.date && "border-destructive"
                       )}
+                      onClick={(e) => {
+                        // Prevent event bubbling
+                        e.stopPropagation();
+                      }}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {appointmentDetails.date ? (
@@ -235,11 +250,14 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
                       )}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
+                  <PopoverContent className="w-auto p-0" onClick={(e) => {
+                    // Prevent event bubbling
+                    e.stopPropagation();
+                  }}>
                     <Calendar
                       mode="single"
                       selected={appointmentDetails.date}
-                      onSelect={(date) => handleChange('date', date)}
+                      onSelect={handleCalendarSelect}
                       disabled={(date) => 
                         date < new Date() || // Disable past dates
                         date.getDay() === 0 || // Disable Sundays
@@ -253,6 +271,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
                         )
                       }
                       initialFocus
+                      className="pointer-events-auto"
                     />
                   </PopoverContent>
                 </Popover>
