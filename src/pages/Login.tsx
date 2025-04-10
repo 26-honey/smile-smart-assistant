@@ -1,11 +1,11 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Stethoscope } from 'lucide-react';  // Replace Tooth with a medical-related icon
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
-import { Tooth } from 'lucide-react';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -44,7 +44,7 @@ const Login = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-2">
-            <Tooth className="h-12 w-12 text-dental-blue" />
+            <Stethoscope className="h-12 w-12 text-dental-blue" />  // Changed to Stethoscope
           </div>
           <CardTitle className="text-2xl font-bold text-dental-dark-blue">SmileSmart Assistant</CardTitle>
           <p className="text-sm text-muted-foreground">Enter your credentials to access your account</p>
