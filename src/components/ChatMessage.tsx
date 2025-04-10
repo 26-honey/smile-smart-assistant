@@ -2,7 +2,7 @@
 import React from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from '@/lib/utils';
-import { Tooth } from 'lucide-react';
+import { Stethoscope } from 'lucide-react';
 
 export type MessageType = 'user' | 'assistant';
 
@@ -25,7 +25,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, type, timestamp }) =
           <>
             <AvatarImage src="/tooth-icon.png" alt="Dental Assistant" />
             <AvatarFallback className="text-white bg-dental-teal">
-              <Tooth className="h-5 w-5" />
+              <Stethoscope className="h-5 w-5" />
             </AvatarFallback>
           </>
         )}
