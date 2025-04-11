@@ -20,14 +20,19 @@ const getResponse = async (message: string): Promise<string> => {
 // Function for appointment responses
 const getAppointmentResponse = async (details: AppointmentDetails): Promise<string> => {
   try {
-    // Save appointment to database
+    // Format the date to string if it's a Date object
+    const formattedDate = details.date instanceof Date 
+      ? details.date.toISOString().split('T')[0]  // Convert to 'YYYY-MM-DD' format
+      : details.date?.toString();
+    
+    // Save appointment to database with proper typing
     const { error: dbError } = await supabase
       .from('appointments')
       .insert({
         name: details.name,
         email: details.email,
         phone: details.phone,
-        date: details.date,
+        date: formattedDate,
         time: details.time,
         dentist: details.dentist,
         reason: details.reason
