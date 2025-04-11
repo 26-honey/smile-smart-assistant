@@ -30,7 +30,69 @@ export const detectIntent = async (message: string): Promise<MessageIntent> => {
   }
 };
 
-// Directly search CSV data for relevant information
+// Search vector database for relevant information
+const searchVectorDatabase = async (message: string, intent: MessageIntent): Promise<string> => {
+  try {
+    // Log the search
+    console.log('Searching vector database for intent:', intent);
+    
+    // Add intent-specific terms to improve search relevance
+    let enhancedQuery = message;
+    
+    switch(intent) {
+      case 'doctor':
+        enhancedQuery += " doctor dentist specialist";
+        break;
+      case 'hospital':
+        enhancedQuery += " hospital clinic location";
+        break;
+      case 'insurance':
+        enhancedQuery += " insurance coverage provider";
+        break;
+      case 'appointment':
+        enhancedQuery += " appointment schedule booking";
+        break;
+    }
+    
+    // Call the search-embeddings function
+    const { data, error } = await supabase.functions.invoke('search-embeddings', {
+      body: { 
+        query: enhancedQuery,
+        threshold: 0.7,
+        limit: 5
+      }
+    });
+    
+    if (error) {
+      console.error('Error from search-embeddings function:', error);
+      throw error;
+    }
+    
+    // Extract matching documents
+    const matches = data.matches || [];
+    
+    if (matches.length === 0) {
+      console.log('No vector matches found, falling back to default data');
+      return getFallbackContextByIntent(intent);
+    }
+    
+    // Sort by similarity and combine content
+    const combinedContent = matches
+      .sort((a: any, b: any) => b.similarity - a.similarity)
+      .map((match: any) => match.content)
+      .join('\n\n');
+    
+    console.log(`Found ${matches.length} vector matches with highest similarity of ${matches[0]?.similarity?.toFixed(2)}`);
+    
+    return combinedContent;
+  } catch (error) {
+    console.error('Error searching vector database:', error);
+    // Fall back to keyword-based search
+    return searchLocalData(message, intent);
+  }
+};
+
+// Directly search CSV data for relevant information (as fallback)
 const searchLocalData = (message: string, intent: MessageIntent): string => {
   const searchTerms = message.toLowerCase().split(' ');
   let relevantInfo = '';
@@ -112,35 +174,36 @@ const searchLocalData = (message: string, intent: MessageIntent): string => {
   return relevantInfo;
 };
 
+// Get fallback context by intent
+const getFallbackContextByIntent = (intent: MessageIntent): string => {
+  switch (intent) {
+    case 'appointment':
+      return `${getFAQsText()}\n\n${getDoctorsText()}`;
+    case 'insurance':
+      return getInsuranceText();
+    case 'doctor':
+      return getDoctorsText();
+    case 'hospital':
+      return getHospitalsText();
+    case 'greeting':
+      // No context needed for greetings
+      return "";
+    default:
+      return getFAQsText();
+  }
+};
+
 // Generate response based on message and intent
 export const generateResponse = async (message: string, intent: MessageIntent): Promise<string> => {
   try {
     console.log('Generating response for intent:', intent);
     
-    // Get relevant context data
-    let context = searchLocalData(message, intent);
+    // Get relevant context data using vector search
+    let context = await searchVectorDatabase(message, intent);
     
-    // Fall back to broader context if no specific matches
+    // If no context was found, fall back to predefined text
     if (!context) {
-      switch (intent) {
-        case 'appointment':
-          context = `${getFAQsText()}\n\n${getDoctorsText()}`;
-          break;
-        case 'insurance':
-          context = getInsuranceText();
-          break;
-        case 'doctor':
-          context = getDoctorsText();
-          break;
-        case 'hospital':
-          context = getHospitalsText();
-          break;
-        case 'greeting':
-          // No context needed for greetings
-          break;
-        default:
-          context = getFAQsText();
-      }
+      context = getFallbackContextByIntent(intent);
     }
     
     console.log('Using context length:', context.length);

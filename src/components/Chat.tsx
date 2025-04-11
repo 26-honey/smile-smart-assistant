@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import ChatHistory, { ChatMessageItem } from './ChatHistory';
 import ChatInput from './ChatInput';
 import AppointmentModal, { AppointmentDetails } from './AppointmentModal';
-import { getResponse, getAppointmentResponse } from '@/utils/chatService';
+import { getResponse, getAppointmentResponse, populateVectorDatabase } from '@/utils/chatService';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -19,7 +19,28 @@ const Chat: React.FC = () => {
   ]);
   const [appointmentModalOpen, setAppointmentModalOpen] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const [databaseReady, setDatabaseReady] = useState(false);
   const { toast } = useToast();
+
+  // Populate vector database when component mounts
+  useEffect(() => {
+    const initializeVectorDatabase = async () => {
+      try {
+        const success = await populateVectorDatabase();
+        setDatabaseReady(success);
+        if (success) {
+          console.log('Vector database initialized successfully');
+        } else {
+          console.warn('Vector database initialization failed, using fallback search methods');
+        }
+      } catch (error) {
+        console.error('Error initializing vector database:', error);
+        setDatabaseReady(false);
+      }
+    };
+    
+    initializeVectorDatabase();
+  }, []);
 
   // Track and display console logs in development mode
   useEffect(() => {
