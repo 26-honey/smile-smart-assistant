@@ -21,9 +21,14 @@ const getResponse = async (message: string): Promise<string> => {
 const getAppointmentResponse = async (details: AppointmentDetails): Promise<string> => {
   try {
     // Format the date to string if it's a Date object
-    const formattedDate = details.date instanceof Date 
-      ? details.date.toISOString().split('T')[0]  // Convert to 'YYYY-MM-DD' format
-      : details.date?.toString();
+    let formattedDate: string;
+    if (details.date instanceof Date) {
+      formattedDate = details.date.toISOString().split('T')[0]; // Convert to 'YYYY-MM-DD' format
+    } else if (details.date) {
+      formattedDate = String(details.date); // Use String() instead of toString() to handle various types
+    } else {
+      formattedDate = new Date().toISOString().split('T')[0]; // Default to today if no date provided
+    }
     
     // Save appointment to database with proper typing
     const { error: dbError } = await supabase
