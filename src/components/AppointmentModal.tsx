@@ -22,8 +22,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { format } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { parseCSV } from '@/utils/dataService';
-import DoctorsData from '@/assets/Doctors.csv?raw';
+import { Doctors } from '@/utils/dataService';
 
 interface AppointmentModalProps {
   open: boolean;
@@ -80,8 +79,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
 
   useEffect(() => {
     try {
-      const doctors = parseCSV(DoctorsData);
-      const formattedDentists = doctors.map(doc => 
+      const formattedDentists = Doctors.map(doc => 
         `Dr. ${doc['First Name']} ${doc['Last Name']}`
       );
       
