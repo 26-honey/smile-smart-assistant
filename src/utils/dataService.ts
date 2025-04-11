@@ -5,20 +5,62 @@ import DoctorsData from '@/assets/Doctors.csv?raw';
 import HospitalsData from '@/assets/Hospitals.csv?raw';
 import InsuranceData from '@/assets/Insurance.csv?raw';
 
-// Parse CSV data
-export const parseCSV = (csvString: string) => {
+// Define interfaces for each data type
+interface FAQ {
+  Question: string;
+  Answer: string;
+}
+
+interface Doctor {
+  'First Name': string;
+  'Last Name': string;
+  Specialization: string;
+  days_available: string;
+  doctor_id?: string;
+  email?: string;
+  gender?: string;
+  contact_info?: string;
+  hospital_id?: string;
+}
+
+interface Hospital {
+  hospital_id: string;
+  hospital_name: string;
+  branch_location: string;
+  address: string;
+  open_hours: string;
+  urgent_care: string;
+  email?: string;
+  contact_info?: string;
+  doctors_available?: string;
+}
+
+interface Insurance {
+  'insurance provider Name': string;
+  coverage_type: string;
+  insurance_status: string;
+  insurance_id?: string;
+  insurance_member_id?: string;
+  policy_id?: string;
+  valid_from?: string;
+  valid_to?: string;
+  patient_id?: string;
+}
+
+// Parse CSV data with proper typing
+export const parseCSV = <T>(csvString: string): T[] => {
   const result = Papa.parse(csvString, {
     header: true,
     skipEmptyLines: true
   });
-  return result.data;
+  return result.data as T[];
 };
 
-// Exported data objects
-export const FAQs = parseCSV(FAQsData);
-export const Doctors = parseCSV(DoctorsData);
-export const Hospitals = parseCSV(HospitalsData);
-export const Insurance = parseCSV(InsuranceData);
+// Exported data objects with proper typing
+export const FAQs = parseCSV<FAQ>(FAQsData);
+export const Doctors = parseCSV<Doctor>(DoctorsData);
+export const Hospitals = parseCSV<Hospital>(HospitalsData);
+export const Insurance = parseCSV<Insurance>(InsuranceData);
 
 // Convert all objects to embeddings-friendly strings
 export const getFAQsText = () => {
