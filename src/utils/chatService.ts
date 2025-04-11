@@ -6,8 +6,11 @@ import { supabase } from "@/integrations/supabase/client";
 // Function to get response based on user message
 const getResponse = async (message: string): Promise<string> => {
   try {
+    console.log('Processing user message:', message);
+    
     // Detect the intent of the message
     const intent = await detectIntent(message);
+    console.log('Detected intent:', intent);
     
     // Generate a response based on the intent and message
     return await generateResponse(message, intent);
@@ -30,6 +33,8 @@ const getAppointmentResponse = async (details: AppointmentDetails): Promise<stri
       formattedDate = new Date().toISOString().split('T')[0]; // Default to today if no date provided
     }
     
+    console.log('Saving appointment for:', details.name, 'on', formattedDate);
+    
     // Save appointment to database with proper typing
     const { error: dbError } = await supabase
       .from('appointments')
@@ -47,6 +52,8 @@ const getAppointmentResponse = async (details: AppointmentDetails): Promise<stri
       console.error('Error saving appointment to database:', dbError);
       throw dbError;
     }
+    
+    console.log('Appointment saved successfully. Generating response...');
     
     // Generate response using OpenAI
     return await generateAppointmentResponse(details);

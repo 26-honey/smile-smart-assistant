@@ -17,6 +17,9 @@ serve(async (req) => {
 
   try {
     const { message, context, intent } = await req.json();
+    
+    console.log(`Processing message with intent: ${intent}`);
+    console.log(`Context size: ${context?.length || 0} characters`);
 
     // Build system message based on intent
     let systemPrompt = 'You are SmileSmartAssistant, a helpful dental chatbot. ';
@@ -29,19 +32,19 @@ serve(async (req) => {
         systemPrompt += 'Help the user schedule a dental appointment. Be informative about the process and available options.';
         break;
       case 'insurance':
-        systemPrompt += 'Provide information about dental insurance coverage and accepted providers.';
+        systemPrompt += 'Provide specific information about dental insurance coverage and accepted providers.';
         break;
       case 'doctor':
-        systemPrompt += 'Provide information about our dentists, their specializations, and availability.';
+        systemPrompt += 'Provide detailed information about our dentists, their specializations, and availability.';
         break;
       case 'hospital':
-        systemPrompt += 'Provide information about our dental clinics, locations, and services.';
+        systemPrompt += 'Provide specific information about our dental clinics, locations, and services.';
         break;
       default:
         systemPrompt += 'Answer the user\'s questions about dental care and services accurately and helpfully.';
     }
     
-    systemPrompt += ' Be concise and friendly in your responses. If you don\'t know the answer, say so politely.';
+    systemPrompt += ' Be concise and friendly in your responses. Base your answers directly on the provided context. If the specific information is not in the context, say so politely.';
 
     // Add context if available
     if (context) {
@@ -68,10 +71,12 @@ serve(async (req) => {
     const data = await response.json();
     
     if (data.error) {
+      console.error('OpenAI API error:', data.error);
       throw new Error(data.error.message || 'Error from OpenAI API');
     }
     
     const generatedResponse = data.choices[0].message.content;
+    console.log('Generated response successfully');
 
     return new Response(JSON.stringify({ response: generatedResponse }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

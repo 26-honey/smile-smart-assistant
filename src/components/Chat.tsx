@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import ChatHistory, { ChatMessageItem } from './ChatHistory';
 import ChatInput from './ChatInput';
@@ -21,6 +21,13 @@ const Chat: React.FC = () => {
   const [processing, setProcessing] = useState(false);
   const { toast } = useToast();
 
+  // Track and display console logs in development mode
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Chat component initialized. Ready to process dental queries.');
+    }
+  }, []);
+
   const addMessage = useCallback((text: string, type: 'user' | 'assistant') => {
     const newMessage: ChatMessageItem = {
       id: uuidv4(),
@@ -40,8 +47,10 @@ const Chat: React.FC = () => {
     setProcessing(true);
     
     try {
+      console.log('Sending message:', message);
       // Get AI response
       const response = await getResponse(message);
+      console.log('Received response:', response.substring(0, 50) + '...');
       addMessage(response, 'assistant');
     } catch (error) {
       console.error('Error getting response:', error);
@@ -67,6 +76,7 @@ const Chat: React.FC = () => {
     setProcessing(true);
     
     try {
+      console.log('Scheduling appointment:', details);
       // Get appointment confirmation response
       const response = await getAppointmentResponse(details);
       addMessage(response, 'assistant');
