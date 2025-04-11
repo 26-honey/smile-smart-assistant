@@ -1,6 +1,7 @@
 
 import { AppointmentDetails } from "@/components/AppointmentModal";
 import { detectIntent, generateResponse, getAppointmentResponse as generateAppointmentResponse } from "./ragService";
+import { supabase } from "@/integrations/supabase/client";
 
 // Function to get response based on user message
 const getResponse = async (message: string): Promise<string> => {
@@ -19,6 +20,25 @@ const getResponse = async (message: string): Promise<string> => {
 // Function for appointment responses
 const getAppointmentResponse = async (details: AppointmentDetails): Promise<string> => {
   try {
+    // Save appointment to database
+    const { error: dbError } = await supabase
+      .from('appointments')
+      .insert({
+        name: details.name,
+        email: details.email,
+        phone: details.phone,
+        date: details.date,
+        time: details.time,
+        dentist: details.dentist,
+        reason: details.reason
+      });
+    
+    if (dbError) {
+      console.error('Error saving appointment to database:', dbError);
+      throw dbError;
+    }
+    
+    // Generate response using OpenAI
     return await generateAppointmentResponse(details);
   } catch (error) {
     console.error('Error in getAppointmentResponse:', error);

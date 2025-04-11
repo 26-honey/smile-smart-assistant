@@ -18,6 +18,9 @@ serve(async (req) => {
   try {
     const { details, specialtyDoctors, availableDays } = await req.json();
     
+    // Log the received appointment details for debugging
+    console.log("Received appointment details:", JSON.stringify(details, null, 2));
+    
     const appointmentDate = details.date ? new Date(details.date) : new Date();
     const formattedDate = appointmentDate.toLocaleDateString('en-US', {
       weekday: 'long',
@@ -66,16 +69,21 @@ serve(async (req) => {
     const data = await response.json();
     
     if (data.error) {
+      console.error('OpenAI API error:', data.error);
       throw new Error(data.error.message || 'Error from OpenAI API');
     }
     
     const generatedResponse = data.choices[0].message.content;
+    console.log("Generated appointment response:", generatedResponse);
 
     return new Response(JSON.stringify({ response: generatedResponse }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
     console.error('Error in generate-appointment-response function:', error);
+    
+    // Extract details for fallback response
+    const details = req.body ? await req.json().then(data => data.details).catch(() => ({})) : {};
     
     // Fallback response if OpenAI request fails
     const appointmentDate = details?.date ? new Date(details.date) : new Date();
@@ -86,7 +94,7 @@ serve(async (req) => {
       year: 'numeric'
     });
     
-    const fallbackResponse = `Great! Your appointment with ${details?.dentist} has been scheduled for ${formattedDate} at ${details?.time} for ${details?.reason}. A confirmation email has been sent to ${details?.email}. If you need to reschedule or have any questions, just let me know!`;
+    const fallbackResponse = `Great! Your appointment with ${details?.dentist || 'your dentist'} has been scheduled for ${formattedDate} at ${details?.time || 'the scheduled time'} for ${details?.reason || 'your dental care'}. A confirmation email has been sent to ${details?.email || 'your email'}. If you need to reschedule or have any questions, just let me know!`;
     
     return new Response(JSON.stringify({ response: fallbackResponse }), {
       status: 500,
