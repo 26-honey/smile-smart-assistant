@@ -36,22 +36,26 @@ const Chat: React.FC = () => {
     // Add user message
     addMessage(message, 'user');
     
-    // Simulate AI processing
+    // Show AI is processing
     setProcessing(true);
     
-    setTimeout(() => {
+    try {
       // Get AI response
-      const response = getResponse(message);
+      const response = await getResponse(message);
       addMessage(response, 'assistant');
+    } catch (error) {
+      console.error('Error getting response:', error);
+      addMessage("I'm sorry, I'm having trouble connecting right now. Please try again in a moment.", 'assistant');
+    } finally {
       setProcessing(false);
-    }, 1000);
+    }
   }, [addMessage]);
 
   const handleRequestAppointment = useCallback(() => {
     setAppointmentModalOpen(true);
   }, []);
 
-  const handleScheduleAppointment = useCallback((details: AppointmentDetails) => {
+  const handleScheduleAppointment = useCallback(async (details: AppointmentDetails) => {
     // Close the modal
     setAppointmentModalOpen(false);
     
@@ -59,14 +63,13 @@ const Chat: React.FC = () => {
     const userMessage = `I'd like to schedule an appointment on ${details.date?.toLocaleDateString()} at ${details.time} with ${details.dentist} for ${details.reason}.`;
     addMessage(userMessage, 'user');
     
-    // Simulate AI processing
+    // Show AI is processing
     setProcessing(true);
     
-    setTimeout(() => {
+    try {
       // Get appointment confirmation response
-      const response = getAppointmentResponse(details);
+      const response = await getAppointmentResponse(details);
       addMessage(response, 'assistant');
-      setProcessing(false);
       
       // Show toast notification
       toast({
@@ -74,7 +77,12 @@ const Chat: React.FC = () => {
         description: `Your appointment with ${details.dentist} on ${details.date?.toLocaleDateString()} at ${details.time} has been confirmed.`,
         duration: 5000,
       });
-    }, 1000);
+    } catch (error) {
+      console.error('Error scheduling appointment:', error);
+      addMessage("I'm sorry, there was an issue scheduling your appointment. Please try again or contact our office directly.", 'assistant');
+    } finally {
+      setProcessing(false);
+    }
   }, [addMessage, toast]);
 
   return (

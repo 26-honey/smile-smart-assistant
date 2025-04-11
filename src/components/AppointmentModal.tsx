@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -22,6 +22,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { format } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { parseCSV } from '@/utils/dataService';
+import DoctorsData from '@/assets/Doctors.csv?raw';
 
 interface AppointmentModalProps {
   open: boolean;
@@ -38,13 +40,6 @@ export interface AppointmentDetails {
   dentist: string;
   reason: string;
 }
-
-const DENTISTS = [
-  "Dr. Sarah Johnson",
-  "Dr. Michael Chen",
-  "Dr. Emily Rodriguez",
-  "Dr. James Wilson"
-];
 
 const APPOINTMENT_TIMES = [
   "09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM",
@@ -81,6 +76,27 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
   
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [dentists, setDentists] = useState<string[]>([]);
+
+  useEffect(() => {
+    try {
+      const doctors = parseCSV(DoctorsData);
+      const formattedDentists = doctors.map(doc => 
+        `Dr. ${doc['First Name']} ${doc['Last Name']}`
+      );
+      
+      const uniqueDentists = [...new Set(formattedDentists)];
+      setDentists(uniqueDentists);
+    } catch (error) {
+      console.error('Error loading dentists:', error);
+      setDentists([
+        "Dr. Sarah Johnson",
+        "Dr. Michael Chen",
+        "Dr. Emily Rodriguez",
+        "Dr. James Wilson"
+      ]);
+    }
+  }, []);
 
   const handleChange = (field: keyof AppointmentDetails, value: string | Date | undefined) => {
     setAppointmentDetails(prev => ({
@@ -88,7 +104,6 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
       [field]: value
     }));
     
-    // Clear the error for this field if it exists
     if (errors[field]) {
       setErrors(prev => {
         const newErrors = { ...prev };
@@ -154,20 +169,18 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
 
   const handleCalendarSelect = (date: Date | undefined) => {
     handleChange('date', date);
-    // Keep the popover open after selection
     setCalendarOpen(true);
   };
 
   const disabledDays = [
-    new Date(2025, 3, 12), // Example of unavailable date (April 12, 2025)
-    new Date(2025, 3, 13), // Example of unavailable date (April 13, 2025)
-    { from: new Date(2025, 3, 20), to: new Date(2025, 3, 25) }, // Block range
+    new Date(2025, 3, 12),
+    new Date(2025, 3, 13),
+    { from: new Date(2025, 3, 20), to: new Date(2025, 3, 25) }
   ];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]" onPointerDownOutside={(e) => {
-        // Prevent the dialog from closing when clicking inside the calendar popover
         if (calendarOpen) {
           e.preventDefault();
         }
@@ -238,7 +251,6 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
                         errors.date && "border-destructive"
                       )}
                       onClick={(e) => {
-                        // Prevent event bubbling
                         e.stopPropagation();
                       }}
                     >
@@ -251,7 +263,6 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" onClick={(e) => {
-                    // Prevent event bubbling
                     e.stopPropagation();
                   }}>
                     <Calendar
@@ -259,9 +270,9 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
                       selected={appointmentDetails.date}
                       onSelect={handleCalendarSelect}
                       disabled={(date) => 
-                        date < new Date() || // Disable past dates
-                        date.getDay() === 0 || // Disable Sundays
-                        date.getDay() === 6 || // Disable Saturdays
+                        date < new Date() || 
+                        date.getDay() === 0 || 
+                        date.getDay() === 6 || 
                         disabledDays.some(disabledDay => 
                           disabledDay instanceof Date 
                             ? date.toDateString() === disabledDay.toDateString()
@@ -314,7 +325,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
                     <SelectValue placeholder="Select dentist" />
                   </SelectTrigger>
                   <SelectContent>
-                    {DENTISTS.map(dentist => (
+                    {dentists.map(dentist => (
                       <SelectItem key={dentist} value={dentist}>
                         {dentist}
                       </SelectItem>
