@@ -1,9 +1,8 @@
-
 import Papa from 'papaparse';
-import FAQsData from '@/assets/FAQs.csv?raw';
-import DoctorsData from '@/assets/Doctors.csv?raw';
-import HospitalsData from '@/assets/Hospitals.csv?raw';
-import InsuranceData from '@/assets/Insurance.csv?raw';
+import FAQsData from '../../assets/FAQs.csv?raw';
+import DoctorsData from '../../assets/Doctors.csv?raw';
+import HospitalsData from '../../assets/Hospitals.csv?raw';
+import InsuranceData from '../../assets/Insurance.csv?raw';
 
 // Define interfaces for each data type
 interface FAQ {
